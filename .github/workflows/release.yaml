@@ -1,0 +1,39 @@
+name: Tag release
+
+on:
+  push:
+    tags:
+      - "v[0-9].[0-9]+.[0-9]+"
+      - "v[0-9].[0-9]+.[0-9]+-rc[0-9]"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Login to Docker
+      uses: azure/docker-login@v1
+      with:
+        username: neoaggelos
+        password: "${{ secrets.DOCKERHUB_TOKEN }}"
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: "~1.15"
+    - name: Download Go dependencies
+      run: go mod download
+    - name: Determine date
+      id: date
+      run: echo "::set-output name=value::$(date +%Y-%m-%d)"
+    - name: Determine Goreleaser version
+      id: goreleaser_version
+      run: echo "::set-output name=value::$(cat go.mod | grep "github.com/goreleaser/goreleaser v" | cut -d " " -f 2)"
+    - name: Run Goreleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: ${{ steps.goreleaser_version.outputs.value }}
+        args: release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
