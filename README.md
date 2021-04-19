@@ -21,4 +21,4 @@ fio_read_bandwidth_kbps 15715
 fio_write_bandwidth_kbps 6745
 ```
 
-The fio benchmark command is currently hard-coded and executed every 30 minutes.
+By default, fio is run every 6 hours. This can be configured with the `--interval DURATION` flag.

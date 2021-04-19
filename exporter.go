@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,9 +15,9 @@ import (
 )
 
 var (
-	addr       = ":9997"
-	fioCommand = "fio --randrepeat=1 --ioengine=libaio --direct=1 --gtod_reduce=1 --name=test --filename=/tmp/fio-exporter.test --bs=4k --iodepth=32 --size=1G --readwrite=randrw --rwmixread=70"
-	interval   = 30 * time.Minute
+	addr            = ":9997"
+	fioCommand      = "fio --randrepeat=1 --ioengine=libaio --direct=1 --gtod_reduce=1 --name=test --filename=/tmp/fio-exporter.test --bs=4k --iodepth=32 --size=1G --readwrite=randrw --rwmixread=70"
+	defaultInterval = 6 * time.Hour
 )
 
 var (
@@ -61,12 +62,16 @@ func handleOK(readBW, writeBW float64, duration time.Duration) {
 }
 
 func main() {
+	duration := flag.Duration("interval", defaultInterval, "interval for consecutive benchmark runs")
+	flag.Parse()
+
+	log.Printf("Configured interval: %v\n", *duration)
 	go func() {
 		ch := make(chan struct{}, 1)
 		ch <- struct{}{}
 		for {
 			<-ch
-			time.AfterFunc(interval, func() { ch <- struct{}{} })
+			time.AfterFunc(*duration, func() { ch <- struct{}{} })
 
 			log.Printf("Running fio: %s", fioCommand)
 
